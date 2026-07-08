@@ -41,7 +41,7 @@ final class CurrentPageIndexProvider
   }
 }
 
-String _$currentPageIndexHash() => r'b1bc46b4007d9c22746c5cb1c178b284ea131d97';
+String _$currentPageIndexHash() => r'cfbed2a422b73a5b812a43ae00f22f7430981404';
 
 abstract class _$CurrentPageIndex extends $Notifier<int> {
   int build();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-//import 'database.dart';
+import 'database.dart';
 import 'providers.dart'; // Ensure this points to your providers file
 
 class HomePageView extends ConsumerStatefulWidget {
@@ -173,13 +173,37 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                 subtitle: Text(
                   '${item.category} • ${item.building}, Rm ${item.room}',
                 ),
-                trailing: Text(
-                  '${item.value} ${item.unit}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                    fontSize: 16,
-                  ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${item.value} ${item.unit}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.redAccent,
+                      ),
+                      onPressed: () async {
+                        // Deletes the item using its auto-increment ID
+                        await ref.read(appDatabaseProvider).deleteItem(item.id);
+
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Item deleted successfully'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             );

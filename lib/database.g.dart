@@ -84,18 +84,18 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
   late final GeneratedColumn<String> building = GeneratedColumn<String>(
     'building',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _photoMeta = const VerificationMeta('photo');
   @override
   late final GeneratedColumn<String> photo = GeneratedColumn<String>(
     'photo',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _dateCreatedMeta = const VerificationMeta(
     'dateCreated',
@@ -225,16 +225,12 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         _buildingMeta,
         building.isAcceptableOrUnknown(data['building']!, _buildingMeta),
       );
-    } else if (isInserting) {
-      context.missing(_buildingMeta);
     }
     if (data.containsKey('photo')) {
       context.handle(
         _photoMeta,
         photo.isAcceptableOrUnknown(data['photo']!, _photoMeta),
       );
-    } else if (isInserting) {
-      context.missing(_photoMeta);
     }
     if (data.containsKey('date_created')) {
       context.handle(
@@ -311,11 +307,11 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
       building: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}building'],
-      )!,
+      ),
       photo: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}photo'],
-      )!,
+      ),
       dateCreated: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_created'],
@@ -349,8 +345,8 @@ class Item extends DataClass implements Insertable<Item> {
   final String unit;
   final String notes;
   final String room;
-  final String building;
-  final String photo;
+  final String? building;
+  final String? photo;
   final DateTime dateCreated;
   final DateTime dateModified;
   final String? gpsLocation;
@@ -363,8 +359,8 @@ class Item extends DataClass implements Insertable<Item> {
     required this.unit,
     required this.notes,
     required this.room,
-    required this.building,
-    required this.photo,
+    this.building,
+    this.photo,
     required this.dateCreated,
     required this.dateModified,
     this.gpsLocation,
@@ -380,8 +376,12 @@ class Item extends DataClass implements Insertable<Item> {
     map['unit'] = Variable<String>(unit);
     map['notes'] = Variable<String>(notes);
     map['room'] = Variable<String>(room);
-    map['building'] = Variable<String>(building);
-    map['photo'] = Variable<String>(photo);
+    if (!nullToAbsent || building != null) {
+      map['building'] = Variable<String>(building);
+    }
+    if (!nullToAbsent || photo != null) {
+      map['photo'] = Variable<String>(photo);
+    }
     map['date_created'] = Variable<DateTime>(dateCreated);
     map['date_modified'] = Variable<DateTime>(dateModified);
     if (!nullToAbsent || gpsLocation != null) {
@@ -400,8 +400,12 @@ class Item extends DataClass implements Insertable<Item> {
       unit: Value(unit),
       notes: Value(notes),
       room: Value(room),
-      building: Value(building),
-      photo: Value(photo),
+      building: building == null && nullToAbsent
+          ? const Value.absent()
+          : Value(building),
+      photo: photo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photo),
       dateCreated: Value(dateCreated),
       dateModified: Value(dateModified),
       gpsLocation: gpsLocation == null && nullToAbsent
@@ -424,8 +428,8 @@ class Item extends DataClass implements Insertable<Item> {
       unit: serializer.fromJson<String>(json['unit']),
       notes: serializer.fromJson<String>(json['notes']),
       room: serializer.fromJson<String>(json['room']),
-      building: serializer.fromJson<String>(json['building']),
-      photo: serializer.fromJson<String>(json['photo']),
+      building: serializer.fromJson<String?>(json['building']),
+      photo: serializer.fromJson<String?>(json['photo']),
       dateCreated: serializer.fromJson<DateTime>(json['dateCreated']),
       dateModified: serializer.fromJson<DateTime>(json['dateModified']),
       gpsLocation: serializer.fromJson<String?>(json['gpsLocation']),
@@ -443,8 +447,8 @@ class Item extends DataClass implements Insertable<Item> {
       'unit': serializer.toJson<String>(unit),
       'notes': serializer.toJson<String>(notes),
       'room': serializer.toJson<String>(room),
-      'building': serializer.toJson<String>(building),
-      'photo': serializer.toJson<String>(photo),
+      'building': serializer.toJson<String?>(building),
+      'photo': serializer.toJson<String?>(photo),
       'dateCreated': serializer.toJson<DateTime>(dateCreated),
       'dateModified': serializer.toJson<DateTime>(dateModified),
       'gpsLocation': serializer.toJson<String?>(gpsLocation),
@@ -460,8 +464,8 @@ class Item extends DataClass implements Insertable<Item> {
     String? unit,
     String? notes,
     String? room,
-    String? building,
-    String? photo,
+    Value<String?> building = const Value.absent(),
+    Value<String?> photo = const Value.absent(),
     DateTime? dateCreated,
     DateTime? dateModified,
     Value<String?> gpsLocation = const Value.absent(),
@@ -474,8 +478,8 @@ class Item extends DataClass implements Insertable<Item> {
     unit: unit ?? this.unit,
     notes: notes ?? this.notes,
     room: room ?? this.room,
-    building: building ?? this.building,
-    photo: photo ?? this.photo,
+    building: building.present ? building.value : this.building,
+    photo: photo.present ? photo.value : this.photo,
     dateCreated: dateCreated ?? this.dateCreated,
     dateModified: dateModified ?? this.dateModified,
     gpsLocation: gpsLocation.present ? gpsLocation.value : this.gpsLocation,
@@ -568,8 +572,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<String> unit;
   final Value<String> notes;
   final Value<String> room;
-  final Value<String> building;
-  final Value<String> photo;
+  final Value<String?> building;
+  final Value<String?> photo;
   final Value<DateTime> dateCreated;
   final Value<DateTime> dateModified;
   final Value<String?> gpsLocation;
@@ -597,8 +601,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     required String unit,
     required String notes,
     required String room,
-    required String building,
-    required String photo,
+    this.building = const Value.absent(),
+    this.photo = const Value.absent(),
     this.dateCreated = const Value.absent(),
     this.dateModified = const Value.absent(),
     this.gpsLocation = const Value.absent(),
@@ -609,8 +613,6 @@ class ItemsCompanion extends UpdateCompanion<Item> {
        unit = Value(unit),
        notes = Value(notes),
        room = Value(room),
-       building = Value(building),
-       photo = Value(photo),
        tags = Value(tags);
   static Insertable<Item> custom({
     Expression<int>? id,
@@ -652,8 +654,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Value<String>? unit,
     Value<String>? notes,
     Value<String>? room,
-    Value<String>? building,
-    Value<String>? photo,
+    Value<String?>? building,
+    Value<String?>? photo,
     Value<DateTime>? dateCreated,
     Value<DateTime>? dateModified,
     Value<String?>? gpsLocation,
@@ -742,15 +744,204 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   }
 }
 
+class $CategoriesTable extends Categories
+    with TableInfo<$CategoriesTable, Category> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL UNIQUE',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'categories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Category> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Category(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+    );
+  }
+
+  @override
+  $CategoriesTable createAlias(String alias) {
+    return $CategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class Category extends DataClass implements Insertable<Category> {
+  final int id;
+  final String name;
+  const Category({required this.id, required this.name});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    return map;
+  }
+
+  CategoriesCompanion toCompanion(bool nullToAbsent) {
+    return CategoriesCompanion(id: Value(id), name: Value(name));
+  }
+
+  factory Category.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Category(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+    };
+  }
+
+  Category copyWith({int? id, String? name}) =>
+      Category(id: id ?? this.id, name: name ?? this.name);
+  Category copyWithCompanion(CategoriesCompanion data) {
+    return Category(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Category(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Category && other.id == this.id && other.name == this.name);
+}
+
+class CategoriesCompanion extends UpdateCompanion<Category> {
+  final Value<int> id;
+  final Value<String> name;
+  const CategoriesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+  });
+  CategoriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+  }) : name = Value(name);
+  static Insertable<Category> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+    });
+  }
+
+  CategoriesCompanion copyWith({Value<int>? id, Value<String>? name}) {
+    return CategoriesCompanion(id: id ?? this.id, name: name ?? this.name);
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ItemsTable items = $ItemsTable(this);
+  late final $CategoriesTable categories = $CategoriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [items];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [items, categories];
 }
 
 typedef $$ItemsTableCreateCompanionBuilder =
@@ -762,8 +953,8 @@ typedef $$ItemsTableCreateCompanionBuilder =
       required String unit,
       required String notes,
       required String room,
-      required String building,
-      required String photo,
+      Value<String?> building,
+      Value<String?> photo,
       Value<DateTime> dateCreated,
       Value<DateTime> dateModified,
       Value<String?> gpsLocation,
@@ -778,8 +969,8 @@ typedef $$ItemsTableUpdateCompanionBuilder =
       Value<String> unit,
       Value<String> notes,
       Value<String> room,
-      Value<String> building,
-      Value<String> photo,
+      Value<String?> building,
+      Value<String?> photo,
       Value<DateTime> dateCreated,
       Value<DateTime> dateModified,
       Value<String?> gpsLocation,
@@ -1025,8 +1216,8 @@ class $$ItemsTableTableManager
                 Value<String> unit = const Value.absent(),
                 Value<String> notes = const Value.absent(),
                 Value<String> room = const Value.absent(),
-                Value<String> building = const Value.absent(),
-                Value<String> photo = const Value.absent(),
+                Value<String?> building = const Value.absent(),
+                Value<String?> photo = const Value.absent(),
                 Value<DateTime> dateCreated = const Value.absent(),
                 Value<DateTime> dateModified = const Value.absent(),
                 Value<String?> gpsLocation = const Value.absent(),
@@ -1055,8 +1246,8 @@ class $$ItemsTableTableManager
                 required String unit,
                 required String notes,
                 required String room,
-                required String building,
-                required String photo,
+                Value<String?> building = const Value.absent(),
+                Value<String?> photo = const Value.absent(),
                 Value<DateTime> dateCreated = const Value.absent(),
                 Value<DateTime> dateModified = const Value.absent(),
                 Value<String?> gpsLocation = const Value.absent(),
@@ -1098,12 +1289,131 @@ typedef $$ItemsTableProcessedTableManager =
       Item,
       PrefetchHooks Function()
     >;
+typedef $$CategoriesTableCreateCompanionBuilder =
+    CategoriesCompanion Function({Value<int> id, required String name});
+typedef $$CategoriesTableUpdateCompanionBuilder =
+    CategoriesCompanion Function({Value<int> id, Value<String> name});
+
+class $$CategoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CategoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CategoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+}
+
+class $$CategoriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CategoriesTable,
+          Category,
+          $$CategoriesTableFilterComposer,
+          $$CategoriesTableOrderingComposer,
+          $$CategoriesTableAnnotationComposer,
+          $$CategoriesTableCreateCompanionBuilder,
+          $$CategoriesTableUpdateCompanionBuilder,
+          (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
+          Category,
+          PrefetchHooks Function()
+        > {
+  $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CategoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+              }) => CategoriesCompanion(id: id, name: name),
+          createCompanionCallback:
+              ({Value<int> id = const Value.absent(), required String name}) =>
+                  CategoriesCompanion.insert(id: id, name: name),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CategoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CategoriesTable,
+      Category,
+      $$CategoriesTableFilterComposer,
+      $$CategoriesTableOrderingComposer,
+      $$CategoriesTableAnnotationComposer,
+      $$CategoriesTableCreateCompanionBuilder,
+      $$CategoriesTableUpdateCompanionBuilder,
+      (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
+      Category,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$ItemsTableTableManager get items =>
       $$ItemsTableTableManager(_db, _db.items);
+  $$CategoriesTableTableManager get categories =>
+      $$CategoriesTableTableManager(_db, _db.categories);
 }
 
 // **************************************************************************
@@ -1152,4 +1462,4 @@ final class AppDatabaseProvider
   }
 }
 
-String _$appDatabaseHash() => r'63ee888947c6b70ff7ffbf17b8b09651fda53b06';
+String _$appDatabaseHash() => r'1208ef0d4dcc44e993afd4ad86a3907c5602a73f';

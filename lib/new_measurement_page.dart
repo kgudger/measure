@@ -17,7 +17,8 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
 
   // Text Controllers for all required strings and numbers
   final _titleController = TextEditingController();
-  final _categoryController = TextEditingController();
+  String?
+  _selectedCategory; // Tracks the chosen dropdown option instead of a text controller
   final _valueController = TextEditingController();
   final _unitController = TextEditingController();
   final _notesController = TextEditingController();
@@ -31,7 +32,6 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
   void dispose() {
     // Avoid memory leaks by cleanly disposing controllers
     _titleController.dispose();
-    _categoryController.dispose();
     _valueController.dispose();
     _unitController.dispose();
     _notesController.dispose();
@@ -57,13 +57,17 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
         .insert(
           ItemsCompanion.insert(
             title: _titleController.text,
-            category: _categoryController.text,
+            category: _selectedCategory ?? '', // Uses the dropdown value
             value: value,
             unit: _unitController.text,
             notes: _notesController.text,
             room: _roomController.text,
-            building: _buildingController.text,
-            photo: _photoController.text,
+            building: _buildingController.text.isNotEmpty
+                ? drift.Value(_buildingController.text)
+                : const drift.Value.absent(),
+            photo: _photoController.text.isNotEmpty
+                ? drift.Value(_photoController.text)
+                : const drift.Value.absent(),
             tags: _tagsController.text,
             gpsLocation: _gpsController.text.isNotEmpty
                 ? drift.Value(_gpsController.text)
@@ -84,6 +88,8 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final database = ref.watch(appDatabaseProvider);
+
     return Form(
       key: _formKey,
       child: ListView(
@@ -94,10 +100,54 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
             decoration: const InputDecoration(labelText: 'Title *'),
             validator: (v) => v!.isEmpty ? 'Required' : null,
           ),
-          TextFormField(
-            controller: _categoryController,
-            decoration: const InputDecoration(labelText: 'Category *'),
-            validator: (v) => v!.isEmpty ? 'Required' : null,
+          const SizedBox(height: 8),
+          // StreamBuilder dynamically loads category items from database
+          StreamBuilder<List<Category>>(
+            stream: database.watchCategories(),
+            builder: (context, snapshot) {
+              final categoriesList = snapshot.data ?? [];
+
+              // Fallback placeholder if no categories exist in the system yet
+              if (categoriesList.isEmpty) {
+                return DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Category *'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text(
+                        'Please add categories first',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                  onChanged: null, // Disabled
+                  validator: (_) => 'No categories available',
+                );
+              }
+
+              // Reset selection if the previously chosen item was deleted from DB
+              if (_selectedCategory != null &&
+                  !categoriesList.any((c) => c.name == _selectedCategory)) {
+                _selectedCategory = null;
+              }
+
+              return DropdownButtonFormField<String>(
+                initialValue: _selectedCategory,
+                decoration: const InputDecoration(labelText: 'Category *'),
+                items: categoriesList.map((category) {
+                  return DropdownMenuItem<String>(
+                    value: category.name,
+                    child: Text(category.name),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedCategory = newValue;
+                  });
+                },
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              );
+            },
           ),
           Row(
             children: [
