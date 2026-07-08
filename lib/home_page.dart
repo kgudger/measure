@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'database.dart';
 import 'providers.dart'; // Ensure this points to your providers file
+import 'edit_item_page.dart';
 
 class HomePageView extends ConsumerStatefulWidget {
   const HomePageView({super.key});
@@ -113,7 +114,9 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                     _buildDataRow('Value:', '${item.value} ${item.unit}'),
                     _buildDataRow(
                       'Location:',
-                      '${item.building}, Room ${item.room}',
+                      (item.building == null || item.building!.trim().isEmpty)
+                          ? 'Room ${item.room}'
+                          : '${item.building}, Room ${item.room}',
                     ),
                     _buildDataRow('Notes:', item.notes),
                     _buildDataRow('Tags:', item.tags),
@@ -171,7 +174,9 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
-                  '${item.category} • ${item.building}, Rm ${item.room}',
+                  (item.building == null || item.building!.trim().isEmpty)
+                      ? '${item.category} • Room ${item.room}'
+                      : '${item.category} • ${item.building}, Rm ${item.room}',
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -185,6 +190,34 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.visibility_outlined,
+                        color: Colors.greenAccent,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditItemPage(item: item),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.blueAccent,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditItemPage(item: item),
+                          ),
+                        );
+                      },
+                    ),
                     IconButton(
                       icon: const Icon(
                         Icons.delete_outline,

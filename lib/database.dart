@@ -107,6 +107,10 @@ class AppDatabase extends _$AppDatabase {
   }
   // -------------------------
 
+  Future<bool> updateItem(Item item) {
+    return update(items).replace(item);
+  }
+
   Stream<Item?> watchLatestMeasurement() {
     return (select(items)
           ..orderBy([

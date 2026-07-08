@@ -4,6 +4,7 @@ import 'package:drift/drift.dart'
     as drift; // Aliased to prevent conflicts with Material Column
 import 'database.dart';
 import 'main.dart';
+import 'package:image_picker/image_picker.dart';
 
 class NewMeasurementPage extends ConsumerStatefulWidget {
   const NewMeasurementPage({super.key});
@@ -190,10 +191,49 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
           ),
           TextFormField(
             controller: _photoController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Photo Filepath / URI',
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize
+                    .min, // Prevents the Row from stretching across the field
+                children: [
+                  // --- CAMERA BUTTON ---
+                  IconButton(
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    tooltip: 'Take Photo',
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final XFile? photo = await picker.pickImage(
+                        source: ImageSource.camera,
+                        imageQuality: 85,
+                      );
+                      if (photo != null) {
+                        setState(() {
+                          _photoController.text = photo.path;
+                        });
+                      }
+                    },
+                  ),
+                  // --- NEW GALLERY PHOTO PICKER BUTTON ---
+                  IconButton(
+                    icon: const Icon(Icons.photo_library_outlined),
+                    tooltip: 'Pick From Gallery',
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 85,
+                      );
+                      if (image != null) {
+                        setState(() {
+                          _photoController.text = image.path;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-            //              validator: (v) => v!.isEmpty ? 'Required' : null,
           ),
           TextFormField(
             controller: _tagsController,
