@@ -5,6 +5,8 @@ import 'package:drift/drift.dart'
 import 'database.dart';
 import 'main.dart';
 import 'package:image_picker/image_picker.dart';
+import 'categories_page.dart';
+import 'package:geolocator/geolocator.dart';
 
 class NewMeasurementPage extends ConsumerStatefulWidget {
   const NewMeasurementPage({super.key});
@@ -28,6 +30,36 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
   final _photoController = TextEditingController();
   final _gpsController = TextEditingController();
   final _tagsController = TextEditingController();
+
+  Future<void> _getGpsCoordinates() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+    setState(() {
+      _gpsController.text =
+          '${position.latitude.toStringAsFixed(6)}, '
+          '${position.longitude.toStringAsFixed(6)}';
+    });
+  }
 
   @override
   void dispose() {
@@ -103,52 +135,79 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
           ),
           const SizedBox(height: 8),
           // StreamBuilder dynamically loads category items from database
-          StreamBuilder<List<Category>>(
-            stream: database.watchCategories(),
-            builder: (context, snapshot) {
-              final categoriesList = snapshot.data ?? [];
+          // --- DYNAMIC CATEGORY DROPDOWN FROM DB ---
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: StreamBuilder<List<Category>>(
+                  stream: database.watchCategories(),
+                  builder: (context, snapshot) {
+                    final categoriesList = snapshot.data ?? [];
 
-              // Fallback placeholder if no categories exist in the system yet
-              if (categoriesList.isEmpty) {
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Category *'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: null,
-                      child: Text(
-                        'Please add categories first',
-                        style: TextStyle(color: Colors.red),
+                    final dropdownValue =
+                        categoriesList.any((c) => c.name == _selectedCategory)
+                        ? _selectedCategory
+                        : null;
+
+                    if (categoriesList.isEmpty) {
+                      return DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Category *',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text(
+                              'Please add categories first',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                        onChanged: null,
+                        validator: (_) => 'No categories available',
+                      );
+                    }
+
+                    return DropdownButtonFormField<String>(
+                      initialValue: dropdownValue,
+                      decoration: const InputDecoration(
+                        labelText: 'Category *',
                       ),
-                    ),
-                  ],
-                  onChanged: null, // Disabled
-                  validator: (_) => 'No categories available',
-                );
-              }
+                      items: categoriesList.map((category) {
+                        return DropdownMenuItem<String>(
+                          value: category.name,
+                          child: Text(category.name),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      },
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Required' : null,
+                    );
+                  },
+                ),
+              ),
 
-              // Reset selection if the previously chosen item was deleted from DB
-              if (_selectedCategory != null &&
-                  !categoriesList.any((c) => c.name == _selectedCategory)) {
-                _selectedCategory = null;
-              }
+              const SizedBox(width: 8),
 
-              return DropdownButtonFormField<String>(
-                initialValue: _selectedCategory,
-                decoration: const InputDecoration(labelText: 'Category *'),
-                items: categoriesList.map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category.name,
-                    child: Text(category.name),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  setState(() {
-                    _selectedCategory = newValue;
-                  });
-                },
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-              );
-            },
+              Tooltip(
+                message: 'Edit Categories',
+                child: IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CategoriesPage()),
+                    );
+                    // No refresh needed.
+                    // watchCategories() will automatically rebuild.
+                  },
+                ),
+              ),
+            ],
           ),
           Row(
             children: [
@@ -242,11 +301,22 @@ class _NewMeasurementPageState extends ConsumerState<NewMeasurementPage> {
             ),
             validator: (v) => v!.isEmpty ? 'Required' : null,
           ),
-          TextFormField(
-            controller: _gpsController,
-            decoration: const InputDecoration(
-              labelText: 'GPS Coordinates (Optional)',
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _gpsController,
+                  decoration: const InputDecoration(
+                    labelText: 'GPS Coordinates (Optional)',
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.my_location),
+                tooltip: 'Get current GPS location',
+                onPressed: _getGpsCoordinates,
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           ElevatedButton(
