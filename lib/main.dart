@@ -28,17 +28,6 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-/*
-final counterProvider = NotifierProvider<CounterNotifier, int>(
-  CounterNotifier.new,
-);
-
-class CounterNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-  void increment() => state++;
-}
-*/
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -46,9 +35,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Measure Saver',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
       debugShowCheckedModeBanner: false,
-      home: MainNavigationWrapper(),
+      home: const MainNavigationWrapper(),
     );
   }
 }
@@ -72,92 +63,36 @@ class MainNavigationWrapper extends ConsumerWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(titles[currentPageIndex])),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.purple),
-              child: Text(
-                'Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
-            _buildDrawerItem(
-              ref,
-              context,
-              icon: Icons.home,
-              title: 'Home / Search',
-              index: 0,
-            ),
-            _buildDrawerItem(
-              ref,
-              context,
-              icon: Icons.add_box,
-              title: 'New Measurement',
-              index: 2,
-            ),
-            _buildDrawerItem(
-              ref,
-              context,
-              icon: Icons.category,
-              title: 'Categories',
-              index: 3,
-            ),
-            _buildDrawerItem(
-              ref,
-              context,
-              icon: Icons.camera_alt,
-              title: 'Camera',
-              index: 4,
-            ),
-            _buildDrawerItem(
-              ref,
-              context,
-              icon: Icons.photo_library,
-              title: 'Photos',
-              index: 5,
-            ),
-            _buildDrawerItem(
-              ref,
-              context,
-              icon: Icons.settings,
-              title: 'Settings',
-              index: 6,
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text(titles[currentPageIndex]),
+        actions: [
+          // "Add Measurement" Action Icon
+          IconButton(
+            icon: const Icon(Icons.add_box),
+            tooltip: 'Add Measurement',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NewMeasurementPage(),
+                ),
+              );
+            },
+          ),
+          // "Help" Action Icon
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Help',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HelpPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: _getScreenForIndex(currentPageIndex),
-    );
-  }
-
-  Widget _buildDrawerItem(
-    WidgetRef ref,
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required int index,
-  }) {
-    final currentIndex = ref.watch(currentPageIndexProvider);
-    final isSelected = currentIndex == index;
-
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? Colors.purpleAccent : null),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? Colors.purpleAccent : null,
-          fontWeight: isSelected ? FontWeight.bold : null,
-        ),
-      ),
-      selected: isSelected,
-      onTap: () {
-        // 2. Call the notifier method to change the index state
-        ref.read(currentPageIndexProvider.notifier).setPage(index);
-        Navigator.pop(context);
-      },
     );
   }
 
@@ -178,5 +113,27 @@ class MainNavigationWrapper extends ConsumerWidget {
       default:
         return const Center(child: Text('Page not found'));
     }
+  }
+}
+
+// Dedicated Help Page
+class HelpPage extends StatelessWidget {
+  const HelpPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Help & Info')),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(
+          child: Text(
+            'Welcome to the Help Page!\n\nHere you can find instructions and guides on how to use the Measure Saver app.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      ),
+    );
   }
 }

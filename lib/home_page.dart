@@ -112,16 +112,28 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                     _buildDataRow('Title:', item.title),
                     _buildDataRow('Category:', item.category),
                     _buildDataRow('Value:', '${item.value} ${item.unit}'),
-                    _buildDataRow(
-                      'Location:',
-                      (item.building == null || item.building!.trim().isEmpty)
-                          ? 'Room ${item.room}'
-                          : '${item.building}, Room ${item.room}',
-                    ),
+                    _buildDataRow('Location:', item.room),
                     _buildDataRow('Notes:', item.notes),
                     _buildDataRow('Tags:', item.tags),
                     if (item.gpsLocation != null)
                       _buildDataRow('GPS:', item.gpsLocation!),
+                    Tooltip(
+                      message: 'Edit',
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: Colors.blueAccent,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditItemPage(item: item),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.bottomRight,
@@ -173,11 +185,7 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                   item.title,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(
-                  (item.building == null || item.building!.trim().isEmpty)
-                      ? '${item.category} • Room ${item.room}'
-                      : '${item.category} • ${item.building}, Rm ${item.room}',
-                ),
+                subtitle: Text('${item.category} • ${item.room}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -204,7 +212,7 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                         );
                       },
                     ),
-                    IconButton(
+                    /*                    IconButton(
                       icon: const Icon(
                         Icons.edit_outlined,
                         color: Colors.blueAccent,
@@ -217,7 +225,7 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                           ),
                         );
                       },
-                    ),
+                    ),*/
                     IconButton(
                       icon: const Icon(
                         Icons.delete_outline,

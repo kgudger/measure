@@ -220,18 +220,10 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
                   val == null || val.trim().isEmpty ? 'Unit is required' : null,
             ),
 
-            // Optional Field
-            TextFormField(
-              controller: _buildingController,
-              decoration: const InputDecoration(
-                labelText: 'Building (Optional)',
-              ),
-            ),
-
             // Required Field
             TextFormField(
               controller: _roomController,
-              decoration: const InputDecoration(labelText: 'Room *'),
+              decoration: const InputDecoration(labelText: 'Location *'),
               validator: (val) =>
                   val == null || val.trim().isEmpty ? 'Room is required' : null,
             ),
