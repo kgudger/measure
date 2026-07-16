@@ -61,7 +61,23 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
           // Dynamic Body Area
           Expanded(
             child: _searchQuery.isEmpty
-                ? _buildLatestEntryView(context)
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16.0, top: 10.0),
+                        child: Text(
+                          'Latest Measurements',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                        ),
+                      ),
+                      Expanded(child: _buildLatestEntryView(context)),
+                    ],
+                  )
                 : _buildSearchResultsView(_searchQuery),
           ),
         ],
@@ -76,8 +92,12 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
     return latestAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Error loading data: $err')),
-      data: (item) {
-        if (item == null) {
+      // 1. Change the parameter type here to List<dynamic>
+      data: (List<dynamic> rawList) {
+        // 2. Cast it safely to List<Item>
+        final List<Item> itemsList = rawList.cast<Item>();
+
+        if (itemsList.isEmpty) {
           return const Center(
             child: Text(
               'No measurements found.\nUse the menu to add your first one!',
@@ -87,69 +107,79 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
           );
         }
 
+        final latestItems = itemsList.take(3).toList();
+
         return ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
           children: [
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Latest Measurement',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                    ),
-                    const Divider(height: 24),
-                    _buildDataRow('Title:', item.title),
-                    _buildDataRow('Category:', item.category),
-                    _buildDataRow('Value:', '${item.value} ${item.unit}'),
-                    _buildDataRow('Location:', item.room),
-                    _buildDataRow('Notes:', item.notes),
-                    _buildDataRow('Tags:', item.tags),
-                    if (item.gpsLocation != null)
-                      _buildDataRow('GPS:', item.gpsLocation!),
-                    Tooltip(
-                      message: 'Edit',
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                          color: Colors.blueAccent,
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditItemPage(item: item),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        'Created: ${item.dateCreated.toLocal().toString().split('.')[0]}',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  ],
+            /*            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0, left: 4.0),
+                            child: Text(
+                'Latest Measurements',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
-            ),
+            ),*/
+            ...latestItems.map((item) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDataRow('Title:', item.title),
+                        _buildDataRow('Category:', item.category),
+                        _buildDataRow('Value:', '${item.value} ${item.unit}'),
+                        _buildDataRow('Location:', item.room),
+                        _buildDataRow('Notes:', item.notes),
+                        _buildDataRow('Tags:', item.tags),
+                        if (item.gpsLocation != null)
+                          _buildDataRow('GPS:', item.gpsLocation!),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Tooltip(
+                              message: 'Edit',
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.blueAccent,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          EditItemPage(item: item),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Text(
+                              'Created: ${item.dateCreated.toLocal().toString().split('.')[0]}',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           ],
         );
       },

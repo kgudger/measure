@@ -111,13 +111,13 @@ class AppDatabase extends _$AppDatabase {
     return update(items).replace(item);
   }
 
-  Stream<Item?> watchLatestMeasurement() {
+  Stream<List> watchLatestMeasurement() {
     return (select(items)
           ..orderBy([
             (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
           ])
-          ..limit(1))
-        .watchSingleOrNull();
+          ..limit(3))
+        .watch();
   }
 
   Stream<List<Item>> searchItems(String query) {

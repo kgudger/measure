@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // <-- Back to your wor
 import 'database.dart';
 
 // Latest measurement shown on the home page
-final latestMeasurementProvider = StreamProvider.autoDispose<Item?>((ref) {
+final latestMeasurementProvider = StreamProvider.autoDispose<List<dynamic>>((
+  ref,
+) {
   final database = ref.watch(appDatabaseProvider);
   return database.watchLatestMeasurement();
 });
