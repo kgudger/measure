@@ -10,6 +10,7 @@ import 'categories_page.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MeasurementEditorPage extends ConsumerStatefulWidget {
   final Item? item;
@@ -81,8 +82,13 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
     } else {
       await _insertMeasurement();
     }
+    FocusManager.instance.primaryFocus?.unfocus();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    } else {
+      Navigator.pop(context);
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -223,274 +229,320 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
   Widget build(BuildContext context) {
     final database = ref.watch(appDatabaseProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? 'Edit Item' : 'New Measurement')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title *'),
-              validator: (v) => v!.isEmpty ? 'Required' : null,
-            ),
-            const SizedBox(height: 8),
-            // StreamBuilder dynamically loads category items from database
-            // --- DYNAMIC CATEGORY DROPDOWN FROM DB ---
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: StreamBuilder<List<Category>>(
-                    stream: database.watchCategories(),
-                    builder: (context, snapshot) {
-                      final categoriesList = snapshot.data ?? [];
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? 'Edit Item' : 'New Measurement'),
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title *'),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 8),
+              // StreamBuilder dynamically loads category items from database
+              // --- DYNAMIC CATEGORY DROPDOWN FROM DB ---
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: StreamBuilder<List<Category>>(
+                      stream: database.watchCategories(),
+                      builder: (context, snapshot) {
+                        final categoriesList = snapshot.data ?? [];
 
-                      final dropdownValue =
-                          categoriesList.any((c) => c.name == _selectedCategory)
-                          ? _selectedCategory
-                          : null;
+                        final dropdownValue =
+                            categoriesList.any(
+                              (c) => c.name == _selectedCategory,
+                            )
+                            ? _selectedCategory
+                            : null;
 
-                      if (categoriesList.isEmpty) {
+                        if (categoriesList.isEmpty) {
+                          return DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Category *',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text(
+                                  'Please add categories first',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                            onChanged: null,
+                            validator: (_) => 'No categories available',
+                          );
+                        }
+
                         return DropdownButtonFormField<String>(
+                          initialValue: dropdownValue,
                           decoration: const InputDecoration(
                             labelText: 'Category *',
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: null,
-                              child: Text(
-                                'Please add categories first',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                          onChanged: null,
-                          validator: (_) => 'No categories available',
+                          items: categoriesList.map((category) {
+                            return DropdownMenuItem<String>(
+                              value: category.name,
+                              child: Text(category.name),
+                            );
+                          }).toList(),
+                          onChanged: (newValue) {
+                            setState(() {
+                              _selectedCategory = newValue;
+                            });
+                          },
+                          validator: (v) =>
+                              v == null || v.isEmpty ? 'Required' : null,
                         );
-                      }
-
-                      return DropdownButtonFormField<String>(
-                        initialValue: dropdownValue,
-                        decoration: const InputDecoration(
-                          labelText: 'Category *',
-                        ),
-                        items: categoriesList.map((category) {
-                          return DropdownMenuItem<String>(
-                            value: category.name,
-                            child: Text(category.name),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          setState(() {
-                            _selectedCategory = newValue;
-                          });
-                        },
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Required' : null,
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                Tooltip(
-                  message: 'Edit Categories',
-                  child: IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CategoriesPage(),
-                        ),
-                      );
-                      // No refresh needed.
-                      // watchCategories() will automatically rebuild.
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _valueController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                      },
                     ),
-                    decoration: const InputDecoration(labelText: 'Value'),
-                    inputFormatters: [
-                      // Allow digits, spaces, hyphens, and the letters t, o (for "to")
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'[0-9A-Za-z×xX.\-\s]'),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  Tooltip(
+                    message: 'Edit Categories',
+                    child: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const CategoriesPage(),
+                          ),
+                        );
+                        // No refresh needed.
+                        // watchCategories() will automatically rebuild.
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _valueController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Value (Required)',
+                      ),
+                      inputFormatters: [
+                        // Allow digits, spaces, hyphens, and the letters t, o (for "to")
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9A-Za-z×xX.\-\s]'),
+                        ),
+                      ],
+                      validator: (v) {
+                        return parseMeasurement(v ?? '').error;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      FilledButton.tonalIcon(
+                        //                      icon: const Icon(Icons.swap_horiz, size: 18),
+                        label: const Text('- Range'),
+                        onPressed: () => _insertSeparator(' - '),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonalIcon(
+                        //                      icon: const Icon(Icons.grid_3x3, size: 18),
+                        label: const Text('x Size'),
+                        onPressed: () => _insertSeparator(' x '),
                       ),
                     ],
-                    validator: (v) {
-                      return parseMeasurement(v ?? '').error;
-                    },
                   ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    FilledButton.tonalIcon(
-                      icon: const Icon(Icons.swap_horiz, size: 18),
-                      label: const Text('Range'),
-                      onPressed: () => _insertSeparator(' - '),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.tonalIcon(
-                      icon: const Icon(Icons.grid_3x3, size: 18),
-                      label: const Text('Dimensions'),
-                      onPressed: () => _insertSeparator(' x '),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _unitController,
-                    decoration: const InputDecoration(labelText: 'Unit *'),
-                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  //                const SizedBox(width: 12),
+                ],
+              ),
+              TextFormField(
+                controller: _unitController,
+                decoration: const InputDecoration(labelText: 'Unit *'),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _roomController,
+                decoration: const InputDecoration(labelText: 'Location *'),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _notesController,
+                decoration: const InputDecoration(labelText: 'Notes *'),
+                maxLines: 2,
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _photoController,
+                decoration: InputDecoration(
+                  labelText: 'Photo Filepath / URI (Optional)',
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize
+                        .min, // Prevents the Row from stretching across the field
+                    children: [
+                      // --- CAMERA BUTTON ---
+                      IconButton(
+                        icon: const Icon(Icons.photo_camera_outlined),
+                        tooltip: 'Take Photo',
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final XFile? photo = await picker.pickImage(
+                            source: ImageSource.camera,
+                            imageQuality: 85,
+                          );
+                          if (photo != null) {
+                            setState(() {
+                              _photoController.text = photo.path;
+                            });
+                          }
+                        },
+                      ),
+                      // --- NEW GALLERY PHOTO PICKER BUTTON ---
+                      IconButton(
+                        icon: const Icon(Icons.photo_library_outlined),
+                        tooltip: 'Pick From Gallery',
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(
+                            source: ImageSource.gallery,
+                            imageQuality: 85,
+                          );
+                          if (image != null) {
+                            setState(() {
+                              _photoController.text = image.path;
+                            });
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            TextFormField(
-              controller: _roomController,
-              decoration: const InputDecoration(labelText: 'Location *'),
-              validator: (v) => v!.isEmpty ? 'Required' : null,
-            ),
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(labelText: 'Notes *'),
-              maxLines: 2,
-              validator: (v) => v!.isEmpty ? 'Required' : null,
-            ),
-            TextFormField(
-              controller: _photoController,
-              decoration: InputDecoration(
-                labelText: 'Photo Filepath / URI',
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize
-                      .min, // Prevents the Row from stretching across the field
-                  children: [
-                    // --- CAMERA BUTTON ---
-                    IconButton(
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      tooltip: 'Take Photo',
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final XFile? photo = await picker.pickImage(
-                          source: ImageSource.camera,
-                          imageQuality: 85,
-                        );
-                        if (photo != null) {
-                          setState(() {
-                            _photoController.text = photo.path;
-                          });
-                        }
-                      },
-                    ),
-                    // --- NEW GALLERY PHOTO PICKER BUTTON ---
-                    IconButton(
-                      icon: const Icon(Icons.photo_library_outlined),
-                      tooltip: 'Pick From Gallery',
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(
-                          source: ImageSource.gallery,
-                          imageQuality: 85,
-                        );
-                        if (image != null) {
-                          setState(() {
-                            _photoController.text = image.path;
-                          });
-                        }
-                      },
-                    ),
-                  ],
                 ),
               ),
-            ),
-            // --- NEW IMAGE PREVIEW SECTION ---
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _photoController,
-              builder: (context, value, child) {
-                final path = value.text.trim();
-                if (path.isEmpty) return const SizedBox.shrink();
+              // --- NEW IMAGE PREVIEW SECTION ---
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _photoController,
+                builder: (context, value, child) {
+                  final path = value.text.trim();
+                  if (path.isEmpty) return const SizedBox.shrink();
 
-                return Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Container(
-                      height: 200,
-                      width: double.infinity,
-                      color: Colors.grey[200],
-                      child: Image.file(
-                        File(path),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback placeholder if the path is invalid or file doesn't exist
-                          return const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.broken_image_outlined,
-                                  color: Colors.grey,
-                                  size: 40,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Invalid image path or file missing',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        color: Colors.grey[200],
+                        child: Image.file(
+                          File(path),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback placeholder if the path is invalid or file doesn't exist
+                            return const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.broken_image_outlined,
+                                    color: Colors.grey,
+                                    size: 40,
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Invalid image path or file missing',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ), // Required Field
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Product URL (Optional)',
                       ),
                     ),
                   ),
-                );
-              },
-            ), // Required Field
-            TextFormField(
-              controller: _tagsController,
-              decoration: const InputDecoration(
-                labelText: 'Tags (comma-separated) *',
+                  IconButton(
+                    icon: const Icon(Icons.open_in_browser),
+                    tooltip: 'Open on the internet',
+                    onPressed: () async {
+                      final String urlText = _tagsController.text.trim();
+
+                      if (urlText.isEmpty) return;
+
+                      // Parse text into a valid URI component
+                      final Uri url = Uri.parse(urlText);
+
+                      // Safely check if the device can handle the web URL before opening
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(
+                          url,
+                          mode: LaunchMode
+                              .externalApplication, // Forces external browser app
+                        );
+                      } else {
+                        // Optional: Show a quick snackbar error message if the URL layout is invalid
+                        if (!context.mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Could not launch invalid URL: $urlText',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
-              validator: (v) => v!.isEmpty ? 'Required' : null,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _gpsController,
-                    decoration: const InputDecoration(
-                      labelText: 'GPS Coordinates (Optional)',
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _gpsController,
+                      decoration: const InputDecoration(
+                        labelText: 'GPS Coordinates (Optional)',
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.my_location),
-                  tooltip: 'Get current GPS location',
-                  onPressed: _getGpsCoordinates,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _save,
-              child: Text(isEditing ? 'Save Changes' : 'Save Measurement'),
-            ),
-          ],
+                  IconButton(
+                    icon: const Icon(Icons.my_location),
+                    tooltip: 'Get current GPS location',
+                    onPressed: _getGpsCoordinates,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _save,
+                child: Text(isEditing ? 'Save Changes' : 'Save Measurement'),
+              ),
+            ],
+          ),
         ),
       ),
     );

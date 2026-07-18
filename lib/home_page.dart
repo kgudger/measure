@@ -14,10 +14,12 @@ class HomePageView extends ConsumerStatefulWidget {
 class _HomePageViewState extends ConsumerState<HomePageView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  final FocusNode _searchFocus = FocusNode();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -31,8 +33,9 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
+              focusNode: _searchFocus,
               decoration: InputDecoration(
-                hintText: 'Search title, category, or tags...',
+                hintText: 'Search title, category, or location...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -140,9 +143,9 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                         _buildDataRow('Value:', '${item.value} ${item.unit}'),
                         _buildDataRow('Location:', item.room),
                         _buildDataRow('Notes:', item.notes),
-                        _buildDataRow('Tags:', item.tags),
+                        /*                        if (item.tags != "") _buildDataRow('URL:', item.tags),
                         if (item.gpsLocation != null)
-                          _buildDataRow('GPS:', item.gpsLocation!),
+                          _buildDataRow('GPS:', item.gpsLocation!),*/
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -235,14 +238,21 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                           Icons.visibility_outlined,
                           color: Colors.greenAccent,
                         ),
-                        onPressed: () {
-                          Navigator.push(
+                        onPressed: () async {
+                          FocusScope.of(context).unfocus();
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
                                   MeasurementEditorPage(item: item),
                             ),
                           );
+                          if (!mounted) return;
+                          // Remove focus from the search field.
+                          _searchController.clear();
+                          _searchFocus.unfocus();
+                          // Also hide the soft keyboard.
+                          FocusManager.instance.primaryFocus?.unfocus();
                         },
                       ),
                     ),

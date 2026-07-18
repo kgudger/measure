@@ -33,5 +33,5 @@ class _HelpPage extends State<HelpPage> {
   }
 
   String helpText =
-      'The Main Page shows the 3 latest measurement entries. Click the "+" button at the top to add new measurements. You can search your previous measurements on the home page. Each entry requires you to select a Category from a drop down list. There is an edit symbol next to "Category" to allow you to delete or add any categories. The "Value" field accepts a range, e.g. "7-20" (or "7 to 20"). On the home page note the "View" icon allows you to view AND edit any entry.';
+      'The Home Page shows up to the 3 latest measurement entries. Click the "+" button at the top to add new measurements. You can search your previous measurements on the home page.\nEach entry requires you to select a Category from a drop down list. There is an edit symbol next to "Category" to allow you to delete or add any categories. The "Value" field accepts a range, e.g. "7-20" (or "7 to 20") or up to 3 dimensions. Click the “Range” button to add the “-” between values or the “Size” button to add an “x” between dimensions.\nOn the home page note the "View" icon allows you to view AND edit any entry.';
 }

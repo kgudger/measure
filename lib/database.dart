@@ -144,9 +144,7 @@ class AppDatabase extends _$AppDatabase {
               t.title.lower().like(q) |
               t.category.lower().like(q) |
               t.notes.lower().like(q) |
-              t.tags.lower().like(q) |
-              t.room.lower().like(q) |
-              t.building.lower().like(q),
+              t.room.lower().like(q),
         ))
         .watch();
   }
