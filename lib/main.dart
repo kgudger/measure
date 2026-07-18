@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 //import 'database.dart';
-import 'new_measurement_page.dart';
+import 'measurement_editor_page.dart';
 //import 'home_page.dart';
 //import 'providers.dart';
 import 'home_page.dart';
-import 'categories_page.dart';
+import 'help_page.dart';
+//import 'categories_page.dart';
 //import 'current_page_index.dart';
 
 // 1. This part statement is required for code generation
@@ -74,7 +75,7 @@ class MainNavigationWrapper extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const NewMeasurementPage(),
+                  builder: (context) => const MeasurementEditorPage(),
                 ),
               );
             },
@@ -101,21 +102,13 @@ class MainNavigationWrapper extends ConsumerWidget {
       case 0:
         return const HomePageView();
       case 2:
-        return const NewMeasurementPage();
-      case 3:
-        return const CategoriesPage();
-      case 4:
-        return const Center(child: Text('Camera Content View'));
-      case 5:
-        return const Center(child: Text('Photos Content View'));
-      case 6:
-        return const Center(child: Text('Settings Content View'));
+        return const MeasurementEditorPage();
       default:
         return const Center(child: Text('Page not found'));
     }
   }
 }
-
+/*
 // Dedicated Help Page
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
@@ -137,3 +130,4 @@ class HelpPage extends StatelessWidget {
     );
   }
 }
+*/

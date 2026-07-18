@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'database.dart';
 import 'providers.dart'; // Ensure this points to your providers file
-import 'edit_item_page.dart';
+import 'measurement_editor_page.dart';
 
 class HomePageView extends ConsumerStatefulWidget {
   const HomePageView({super.key});
@@ -147,18 +147,18 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Tooltip(
-                              message: 'Edit',
+                              message: 'View / Edit',
                               child: IconButton(
                                 icon: const Icon(
-                                  Icons.edit_outlined,
-                                  color: Colors.blueAccent,
+                                  Icons.visibility_outlined,
+                                  color: Colors.greenAccent,
                                 ),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          EditItemPage(item: item),
+                                          MeasurementEditorPage(item: item),
                                     ),
                                   );
                                 },
@@ -228,34 +228,24 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.visibility_outlined,
-                        color: Colors.greenAccent,
+                    Tooltip(
+                      message: 'View / Edit',
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.visibility_outlined,
+                          color: Colors.greenAccent,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  MeasurementEditorPage(item: item),
+                            ),
+                          );
+                        },
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditItemPage(item: item),
-                          ),
-                        );
-                      },
                     ),
-                    /*                    IconButton(
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        color: Colors.blueAccent,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditItemPage(item: item),
-                          ),
-                        );
-                      },
-                    ),*/
                     IconButton(
                       icon: const Icon(
                         Icons.delete_outline,

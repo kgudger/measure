@@ -9,7 +9,13 @@ class Items extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
   TextColumn get category => text()();
-  RealColumn get value => real()();
+  TextColumn get value => text()();
+
+  RealColumn get value1 => real().nullable()();
+  RealColumn get value2 => real().nullable()();
+  RealColumn get value3 => real().nullable()();
+
+  IntColumn get valueType => integer()();
   TextColumn get unit => text()();
   TextColumn get notes => text()();
   TextColumn get room => text()();

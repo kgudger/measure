@@ -43,11 +43,49 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
   );
   static const VerificationMeta _valueMeta = const VerificationMeta('value');
   @override
-  late final GeneratedColumn<double> value = GeneratedColumn<double>(
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
     'value',
     aliasedName,
     false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _value1Meta = const VerificationMeta('value1');
+  @override
+  late final GeneratedColumn<double> value1 = GeneratedColumn<double>(
+    'value1',
+    aliasedName,
+    true,
     type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _value2Meta = const VerificationMeta('value2');
+  @override
+  late final GeneratedColumn<double> value2 = GeneratedColumn<double>(
+    'value2',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _value3Meta = const VerificationMeta('value3');
+  @override
+  late final GeneratedColumn<double> value3 = GeneratedColumn<double>(
+    'value3',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _valueTypeMeta = const VerificationMeta(
+    'valueType',
+  );
+  @override
+  late final GeneratedColumn<int> valueType = GeneratedColumn<int>(
+    'value_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _unitMeta = const VerificationMeta('unit');
@@ -147,6 +185,10 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
     title,
     category,
     value,
+    value1,
+    value2,
+    value3,
+    valueType,
     unit,
     notes,
     room,
@@ -195,6 +237,32 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
       );
     } else if (isInserting) {
       context.missing(_valueMeta);
+    }
+    if (data.containsKey('value1')) {
+      context.handle(
+        _value1Meta,
+        value1.isAcceptableOrUnknown(data['value1']!, _value1Meta),
+      );
+    }
+    if (data.containsKey('value2')) {
+      context.handle(
+        _value2Meta,
+        value2.isAcceptableOrUnknown(data['value2']!, _value2Meta),
+      );
+    }
+    if (data.containsKey('value3')) {
+      context.handle(
+        _value3Meta,
+        value3.isAcceptableOrUnknown(data['value3']!, _value3Meta),
+      );
+    }
+    if (data.containsKey('value_type')) {
+      context.handle(
+        _valueTypeMeta,
+        valueType.isAcceptableOrUnknown(data['value_type']!, _valueTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueTypeMeta);
     }
     if (data.containsKey('unit')) {
       context.handle(
@@ -289,8 +357,24 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         data['${effectivePrefix}category'],
       )!,
       value: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
+        DriftSqlType.string,
         data['${effectivePrefix}value'],
+      )!,
+      value1: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}value1'],
+      ),
+      value2: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}value2'],
+      ),
+      value3: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}value3'],
+      ),
+      valueType: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}value_type'],
       )!,
       unit: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -341,7 +425,11 @@ class Item extends DataClass implements Insertable<Item> {
   final int id;
   final String title;
   final String category;
-  final double value;
+  final String value;
+  final double? value1;
+  final double? value2;
+  final double? value3;
+  final int valueType;
   final String unit;
   final String notes;
   final String room;
@@ -356,6 +444,10 @@ class Item extends DataClass implements Insertable<Item> {
     required this.title,
     required this.category,
     required this.value,
+    this.value1,
+    this.value2,
+    this.value3,
+    required this.valueType,
     required this.unit,
     required this.notes,
     required this.room,
@@ -372,7 +464,17 @@ class Item extends DataClass implements Insertable<Item> {
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
     map['category'] = Variable<String>(category);
-    map['value'] = Variable<double>(value);
+    map['value'] = Variable<String>(value);
+    if (!nullToAbsent || value1 != null) {
+      map['value1'] = Variable<double>(value1);
+    }
+    if (!nullToAbsent || value2 != null) {
+      map['value2'] = Variable<double>(value2);
+    }
+    if (!nullToAbsent || value3 != null) {
+      map['value3'] = Variable<double>(value3);
+    }
+    map['value_type'] = Variable<int>(valueType);
     map['unit'] = Variable<String>(unit);
     map['notes'] = Variable<String>(notes);
     map['room'] = Variable<String>(room);
@@ -397,6 +499,16 @@ class Item extends DataClass implements Insertable<Item> {
       title: Value(title),
       category: Value(category),
       value: Value(value),
+      value1: value1 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value1),
+      value2: value2 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value2),
+      value3: value3 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value3),
+      valueType: Value(valueType),
       unit: Value(unit),
       notes: Value(notes),
       room: Value(room),
@@ -424,7 +536,11 @@ class Item extends DataClass implements Insertable<Item> {
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       category: serializer.fromJson<String>(json['category']),
-      value: serializer.fromJson<double>(json['value']),
+      value: serializer.fromJson<String>(json['value']),
+      value1: serializer.fromJson<double?>(json['value1']),
+      value2: serializer.fromJson<double?>(json['value2']),
+      value3: serializer.fromJson<double?>(json['value3']),
+      valueType: serializer.fromJson<int>(json['valueType']),
       unit: serializer.fromJson<String>(json['unit']),
       notes: serializer.fromJson<String>(json['notes']),
       room: serializer.fromJson<String>(json['room']),
@@ -443,7 +559,11 @@ class Item extends DataClass implements Insertable<Item> {
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
       'category': serializer.toJson<String>(category),
-      'value': serializer.toJson<double>(value),
+      'value': serializer.toJson<String>(value),
+      'value1': serializer.toJson<double?>(value1),
+      'value2': serializer.toJson<double?>(value2),
+      'value3': serializer.toJson<double?>(value3),
+      'valueType': serializer.toJson<int>(valueType),
       'unit': serializer.toJson<String>(unit),
       'notes': serializer.toJson<String>(notes),
       'room': serializer.toJson<String>(room),
@@ -460,7 +580,11 @@ class Item extends DataClass implements Insertable<Item> {
     int? id,
     String? title,
     String? category,
-    double? value,
+    String? value,
+    Value<double?> value1 = const Value.absent(),
+    Value<double?> value2 = const Value.absent(),
+    Value<double?> value3 = const Value.absent(),
+    int? valueType,
     String? unit,
     String? notes,
     String? room,
@@ -475,6 +599,10 @@ class Item extends DataClass implements Insertable<Item> {
     title: title ?? this.title,
     category: category ?? this.category,
     value: value ?? this.value,
+    value1: value1.present ? value1.value : this.value1,
+    value2: value2.present ? value2.value : this.value2,
+    value3: value3.present ? value3.value : this.value3,
+    valueType: valueType ?? this.valueType,
     unit: unit ?? this.unit,
     notes: notes ?? this.notes,
     room: room ?? this.room,
@@ -491,6 +619,10 @@ class Item extends DataClass implements Insertable<Item> {
       title: data.title.present ? data.title.value : this.title,
       category: data.category.present ? data.category.value : this.category,
       value: data.value.present ? data.value.value : this.value,
+      value1: data.value1.present ? data.value1.value : this.value1,
+      value2: data.value2.present ? data.value2.value : this.value2,
+      value3: data.value3.present ? data.value3.value : this.value3,
+      valueType: data.valueType.present ? data.valueType.value : this.valueType,
       unit: data.unit.present ? data.unit.value : this.unit,
       notes: data.notes.present ? data.notes.value : this.notes,
       room: data.room.present ? data.room.value : this.room,
@@ -516,6 +648,10 @@ class Item extends DataClass implements Insertable<Item> {
           ..write('title: $title, ')
           ..write('category: $category, ')
           ..write('value: $value, ')
+          ..write('value1: $value1, ')
+          ..write('value2: $value2, ')
+          ..write('value3: $value3, ')
+          ..write('valueType: $valueType, ')
           ..write('unit: $unit, ')
           ..write('notes: $notes, ')
           ..write('room: $room, ')
@@ -535,6 +671,10 @@ class Item extends DataClass implements Insertable<Item> {
     title,
     category,
     value,
+    value1,
+    value2,
+    value3,
+    valueType,
     unit,
     notes,
     room,
@@ -553,6 +693,10 @@ class Item extends DataClass implements Insertable<Item> {
           other.title == this.title &&
           other.category == this.category &&
           other.value == this.value &&
+          other.value1 == this.value1 &&
+          other.value2 == this.value2 &&
+          other.value3 == this.value3 &&
+          other.valueType == this.valueType &&
           other.unit == this.unit &&
           other.notes == this.notes &&
           other.room == this.room &&
@@ -568,7 +712,11 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> category;
-  final Value<double> value;
+  final Value<String> value;
+  final Value<double?> value1;
+  final Value<double?> value2;
+  final Value<double?> value3;
+  final Value<int> valueType;
   final Value<String> unit;
   final Value<String> notes;
   final Value<String> room;
@@ -583,6 +731,10 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.title = const Value.absent(),
     this.category = const Value.absent(),
     this.value = const Value.absent(),
+    this.value1 = const Value.absent(),
+    this.value2 = const Value.absent(),
+    this.value3 = const Value.absent(),
+    this.valueType = const Value.absent(),
     this.unit = const Value.absent(),
     this.notes = const Value.absent(),
     this.room = const Value.absent(),
@@ -597,7 +749,11 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.id = const Value.absent(),
     required String title,
     required String category,
-    required double value,
+    required String value,
+    this.value1 = const Value.absent(),
+    this.value2 = const Value.absent(),
+    this.value3 = const Value.absent(),
+    required int valueType,
     required String unit,
     required String notes,
     required String room,
@@ -610,6 +766,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   }) : title = Value(title),
        category = Value(category),
        value = Value(value),
+       valueType = Value(valueType),
        unit = Value(unit),
        notes = Value(notes),
        room = Value(room),
@@ -618,7 +775,11 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? category,
-    Expression<double>? value,
+    Expression<String>? value,
+    Expression<double>? value1,
+    Expression<double>? value2,
+    Expression<double>? value3,
+    Expression<int>? valueType,
     Expression<String>? unit,
     Expression<String>? notes,
     Expression<String>? room,
@@ -634,6 +795,10 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       if (title != null) 'title': title,
       if (category != null) 'category': category,
       if (value != null) 'value': value,
+      if (value1 != null) 'value1': value1,
+      if (value2 != null) 'value2': value2,
+      if (value3 != null) 'value3': value3,
+      if (valueType != null) 'value_type': valueType,
       if (unit != null) 'unit': unit,
       if (notes != null) 'notes': notes,
       if (room != null) 'room': room,
@@ -650,7 +815,11 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Value<int>? id,
     Value<String>? title,
     Value<String>? category,
-    Value<double>? value,
+    Value<String>? value,
+    Value<double?>? value1,
+    Value<double?>? value2,
+    Value<double?>? value3,
+    Value<int>? valueType,
     Value<String>? unit,
     Value<String>? notes,
     Value<String>? room,
@@ -666,6 +835,10 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       title: title ?? this.title,
       category: category ?? this.category,
       value: value ?? this.value,
+      value1: value1 ?? this.value1,
+      value2: value2 ?? this.value2,
+      value3: value3 ?? this.value3,
+      valueType: valueType ?? this.valueType,
       unit: unit ?? this.unit,
       notes: notes ?? this.notes,
       room: room ?? this.room,
@@ -691,7 +864,19 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       map['category'] = Variable<String>(category.value);
     }
     if (value.present) {
-      map['value'] = Variable<double>(value.value);
+      map['value'] = Variable<String>(value.value);
+    }
+    if (value1.present) {
+      map['value1'] = Variable<double>(value1.value);
+    }
+    if (value2.present) {
+      map['value2'] = Variable<double>(value2.value);
+    }
+    if (value3.present) {
+      map['value3'] = Variable<double>(value3.value);
+    }
+    if (valueType.present) {
+      map['value_type'] = Variable<int>(valueType.value);
     }
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
@@ -730,6 +915,10 @@ class ItemsCompanion extends UpdateCompanion<Item> {
           ..write('title: $title, ')
           ..write('category: $category, ')
           ..write('value: $value, ')
+          ..write('value1: $value1, ')
+          ..write('value2: $value2, ')
+          ..write('value3: $value3, ')
+          ..write('valueType: $valueType, ')
           ..write('unit: $unit, ')
           ..write('notes: $notes, ')
           ..write('room: $room, ')
@@ -949,7 +1138,11 @@ typedef $$ItemsTableCreateCompanionBuilder =
       Value<int> id,
       required String title,
       required String category,
-      required double value,
+      required String value,
+      Value<double?> value1,
+      Value<double?> value2,
+      Value<double?> value3,
+      required int valueType,
       required String unit,
       required String notes,
       required String room,
@@ -965,7 +1158,11 @@ typedef $$ItemsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String> title,
       Value<String> category,
-      Value<double> value,
+      Value<String> value,
+      Value<double?> value1,
+      Value<double?> value2,
+      Value<double?> value3,
+      Value<int> valueType,
       Value<String> unit,
       Value<String> notes,
       Value<String> room,
@@ -1000,8 +1197,28 @@ class $$ItemsTableFilterComposer extends Composer<_$AppDatabase, $ItemsTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get value => $composableBuilder(
+  ColumnFilters<String> get value => $composableBuilder(
     column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get value1 => $composableBuilder(
+    column: $table.value1,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get value2 => $composableBuilder(
+    column: $table.value2,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get value3 => $composableBuilder(
+    column: $table.value3,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get valueType => $composableBuilder(
+    column: $table.valueType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1075,8 +1292,28 @@ class $$ItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get value => $composableBuilder(
+  ColumnOrderings<String> get value => $composableBuilder(
     column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get value1 => $composableBuilder(
+    column: $table.value1,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get value2 => $composableBuilder(
+    column: $table.value2,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get value3 => $composableBuilder(
+    column: $table.value3,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get valueType => $composableBuilder(
+    column: $table.valueType,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1144,8 +1381,20 @@ class $$ItemsTableAnnotationComposer
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
-  GeneratedColumn<double> get value =>
+  GeneratedColumn<String> get value =>
       $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<double> get value1 =>
+      $composableBuilder(column: $table.value1, builder: (column) => column);
+
+  GeneratedColumn<double> get value2 =>
+      $composableBuilder(column: $table.value2, builder: (column) => column);
+
+  GeneratedColumn<double> get value3 =>
+      $composableBuilder(column: $table.value3, builder: (column) => column);
+
+  GeneratedColumn<int> get valueType =>
+      $composableBuilder(column: $table.valueType, builder: (column) => column);
 
   GeneratedColumn<String> get unit =>
       $composableBuilder(column: $table.unit, builder: (column) => column);
@@ -1212,7 +1461,11 @@ class $$ItemsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> category = const Value.absent(),
-                Value<double> value = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<double?> value1 = const Value.absent(),
+                Value<double?> value2 = const Value.absent(),
+                Value<double?> value3 = const Value.absent(),
+                Value<int> valueType = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<String> notes = const Value.absent(),
                 Value<String> room = const Value.absent(),
@@ -1227,6 +1480,10 @@ class $$ItemsTableTableManager
                 title: title,
                 category: category,
                 value: value,
+                value1: value1,
+                value2: value2,
+                value3: value3,
+                valueType: valueType,
                 unit: unit,
                 notes: notes,
                 room: room,
@@ -1242,7 +1499,11 @@ class $$ItemsTableTableManager
                 Value<int> id = const Value.absent(),
                 required String title,
                 required String category,
-                required double value,
+                required String value,
+                Value<double?> value1 = const Value.absent(),
+                Value<double?> value2 = const Value.absent(),
+                Value<double?> value3 = const Value.absent(),
+                required int valueType,
                 required String unit,
                 required String notes,
                 required String room,
@@ -1257,6 +1518,10 @@ class $$ItemsTableTableManager
                 title: title,
                 category: category,
                 value: value,
+                value1: value1,
+                value2: value2,
+                value3: value3,
+                valueType: valueType,
                 unit: unit,
                 notes: notes,
                 room: room,
