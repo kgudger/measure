@@ -27,7 +27,9 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
 
   // Controllers
   final _titleController = TextEditingController();
-  final _valueController = TextEditingController();
+  final _value1Controller = TextEditingController();
+  final _value2Controller = TextEditingController();
+  final _value3Controller = TextEditingController();
   final _unitController = TextEditingController();
   final _notesController = TextEditingController();
   final _roomController = TextEditingController();
@@ -49,7 +51,7 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
 
       _titleController.text = item.title;
       _selectedCategory = item.category;
-      _valueController.text = item.value;
+      _value1Controller.text = item.value;
       _unitController.text = item.unit;
       _notesController.text = item.notes;
       _roomController.text = item.room;
@@ -63,7 +65,9 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
   @override
   void dispose() {
     _titleController.dispose();
-    _valueController.dispose();
+    _value1Controller.dispose();
+    _value2Controller.dispose();
+    _value3Controller.dispose();
     _unitController.dispose();
     _notesController.dispose();
     _roomController.dispose();
@@ -102,7 +106,11 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
   Future<void> _insertMeasurement() async {
     final database = ref.read(appDatabaseProvider);
 
-    final parsed = parseValue(_valueController.text);
+    final parsed = parseMeasurement(_measurementText());
+
+    if (!parsed.isValid) {
+      return;
+    }
 
     await database
         .into(database.items)
@@ -134,7 +142,9 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
 
   Future<void> _updateMeasurement() async {
     final database = ref.read(appDatabaseProvider);
-    final parsed = parseMeasurement(_valueController.text);
+
+    final parsed = parseMeasurement(_measurementText());
+
     if (!parsed.isValid) {
       return;
     }
@@ -155,13 +165,11 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
             ? null
             : _buildingController.text.trim(),
       ),
-
       photo: Value(
         _photoController.text.trim().isEmpty
             ? null
             : _photoController.text.trim(),
       ),
-
       gpsLocation: Value(
         _gpsController.text.trim().isEmpty ? null : _gpsController.text.trim(),
       ),
@@ -170,6 +178,22 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
     );
 
     await database.updateItem(updatedItem);
+  }
+
+  String _measurementText() {
+    switch (_inputMode) {
+      case MeasurementInputMode.single:
+        return _value1Controller.text.trim();
+
+      case MeasurementInputMode.range:
+        return '${_value1Controller.text.trim()} - '
+            '${_value2Controller.text.trim()}';
+
+      case MeasurementInputMode.size:
+        return '${_value1Controller.text.trim()} x '
+            '${_value2Controller.text.trim()} x '
+            '${_value3Controller.text.trim()}';
+    }
   }
 
   Future<void> _getGpsCoordinates() async {
@@ -203,23 +227,23 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
   }
 
   void _insertSeparator(String separator) {
-    final value = _valueController.value;
+    final value = _value1Controller.value;
 
     final start = value.selection.start;
     final end = value.selection.end;
 
     // Cursor not in field? Append to end.
     if (start < 0 || end < 0) {
-      _valueController.text += separator;
-      _valueController.selection = TextSelection.collapsed(
-        offset: _valueController.text.length,
+      _value1Controller.text += separator;
+      _value1Controller.selection = TextSelection.collapsed(
+        offset: _value1Controller.text.length,
       );
       return;
     }
 
     final newText = value.text.replaceRange(start, end, separator);
 
-    _valueController.value = TextEditingValue(
+    _value1Controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: start + separator.length),
     );
@@ -330,43 +354,78 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
               Row(
                 children: [
                   Expanded(
-                    flex: 2,
-                    child: TextFormField(
-                      controller: _valueController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Value (Required)',
-                      ),
-                      inputFormatters: [
-                        // Allow digits, spaces, hyphens, and the letters t, o (for "to")
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[0-9A-Za-z×xX.\-\s]'),
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Value (Required)'),
+
+                        Row(
+                          children: [
+                            _buildValueField(_value1Controller),
+
+                            if (_inputMode == MeasurementInputMode.range) ...[
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  '-',
+                                  style: TextStyle(fontSize: 22),
+                                ),
+                              ),
+                              _buildValueField(_value2Controller),
+                            ],
+
+                            if (_inputMode == MeasurementInputMode.size) ...[
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  'x',
+                                  style: TextStyle(fontSize: 22),
+                                ),
+                              ),
+                              _buildValueField(_value2Controller),
+
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  'x',
+                                  style: TextStyle(fontSize: 22),
+                                ),
+                              ),
+                              _buildValueField(_value3Controller),
+                            ],
+                          ],
                         ),
                       ],
-                      validator: (v) {
-                        return parseMeasurement(v ?? '').error;
-                      },
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
+                  const SizedBox(width: 12),
+                  Column(
                     children: [
-                      FilledButton.tonalIcon(
-                        //                      icon: const Icon(Icons.swap_horiz, size: 18),
-                        label: const Text('- Range'),
-                        onPressed: () => _insertSeparator(' - '),
+                      FilledButton.tonal(
+                        child: const Text("- Range"),
+                        onPressed: () {
+                          setState(() {
+                            _inputMode =
+                                _inputMode == MeasurementInputMode.range
+                                ? MeasurementInputMode.single
+                                : MeasurementInputMode.range;
+                          });
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      FilledButton.tonalIcon(
-                        //                      icon: const Icon(Icons.grid_3x3, size: 18),
-                        label: const Text('x Size'),
-                        onPressed: () => _insertSeparator(' x '),
+                      const SizedBox(height: 8),
+                      FilledButton.tonal(
+                        child: const Text("x Size"),
+                        onPressed: () {
+                          setState(() {
+                            _inputMode = _inputMode == MeasurementInputMode.size
+                                ? MeasurementInputMode.single
+                                : MeasurementInputMode.size;
+                          });
+                        },
                       ),
                     ],
                   ),
-                  //                const SizedBox(width: 12),
                 ],
               ),
               TextFormField(
@@ -446,34 +505,55 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
                         height: 200,
                         width: double.infinity,
                         color: Colors.grey[200],
-                        child: Image.file(
-                          File(path),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            // Fallback placeholder if the path is invalid or file doesn't exist
-                            return const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.broken_image_outlined,
-                                    color: Colors.grey,
-                                    size: 40,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Invalid image path or file missing',
-                                    style: TextStyle(color: Colors.grey),
-                                  ),
-                                ],
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    FullScreenImagePage(imagePath: path),
                               ),
                             );
                           },
+                          child: Hero(
+                            tag: path,
+                            child: Image.file(
+                              File(path),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.broken_image_outlined,
+                                        color: Colors.grey,
+                                        size: 40,
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Invalid image path or file missing',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   );
                 },
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text(
+                  'Tap image to enlarge',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
               ), // Required Field
               Row(
                 children: [
@@ -481,7 +561,8 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
                     child: TextFormField(
                       controller: _tagsController,
                       decoration: const InputDecoration(
-                        labelText: 'Product URL (Optional)',
+                        labelText: 'Item Link (Optional)',
+                        hintText: 'https://example.com',
                       ),
                     ),
                   ),
@@ -544,6 +625,17 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildValueField(TextEditingController controller) {
+    return Expanded(
+      child: TextFormField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: const InputDecoration(),
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
       ),
     );
   }
@@ -704,3 +796,34 @@ ParsedValue parseMeasurement(String input) {
     error: 'Enter a number, range, or dimensions',
   );
 }
+
+class FullScreenImagePage extends StatelessWidget {
+  final String imagePath;
+
+  const FullScreenImagePage({super.key, required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: Hero(
+          tag: imagePath,
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 6.0,
+            child: Image.file(File(imagePath), fit: BoxFit.contain),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum MeasurementInputMode { single, range, size }
+
+MeasurementInputMode _inputMode = MeasurementInputMode.single;
