@@ -296,14 +296,14 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
               label,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.black54,
+                color: Colors.white70,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: const TextStyle(fontSize: 15, color: Colors.white),
             ),
           ),
         ],

@@ -1,5 +1,5 @@
-name: measure_save
-description: "A new Flutter project."
+name: FixTracker
+description: "The ultimate digital tape measure notebook."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.11.5
@@ -58,7 +58,7 @@ dev_dependencies:
   build_runner: any
   riverpod_generator: any
   drift_dev: any
-
+  rename: ^3.0.2
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -78,7 +78,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/images/measurementsafe.png
+    - assets/images/FixTracker.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -113,6 +113,7 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/measurementsafe.png"
+  image_path: "assets/images/FixTracker.png"
   min_sdk_android: 21 # Ensure this matches your actual minSdk in android/app/build.gradle
-
+  adaptive_icon_background: "#ffffff" # Or path to background image: "assets/icon/background.png"
+  adaptive_icon_foreground: "assets/images/FixTracker.png"

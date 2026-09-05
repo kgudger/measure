@@ -35,9 +35,27 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Measure Saver',
+      title: 'FixTracker',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        // 1. Sets the page background for all Scaffolds
+        scaffoldBackgroundColor: const Color(0xFF1E2229),
+
+        // 2. Updates the ColorScheme so widgets (cards, dialogs) match
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1E2229),
+          brightness:
+              Brightness.dark, // Switches default behaviors to dark mode
+          surface: const Color(0xFF1E2229),
+        ),
+
+        // 3. Forces default text styles to use white
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(
+            color: Colors.white70,
+          ), // Slightly faded white for subtext
+        ),
       ),
       debugShowCheckedModeBanner: false,
       home: const MainNavigationWrapper(),

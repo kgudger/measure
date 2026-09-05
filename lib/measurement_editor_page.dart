@@ -48,10 +48,28 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
 
     if (isEditing) {
       final item = widget.item!;
+      switch (widget.item?.valueType) {
+        case 0:
+          _inputMode = MeasurementInputMode.single;
+          break;
 
+        case 1:
+          _inputMode = MeasurementInputMode.range;
+          break;
+
+        case 2:
+          _inputMode = MeasurementInputMode.size;
+          break;
+
+        case 3:
+          _inputMode = MeasurementInputMode.size;
+          break;
+      }
       _titleController.text = item.title;
       _selectedCategory = item.category;
-      _value1Controller.text = item.value;
+      _value1Controller.text = widget.item?.value1?.toString() ?? '';
+      _value2Controller.text = widget.item?.value2?.toString() ?? '';
+      _value3Controller.text = widget.item?.value3?.toString() ?? '';
       _unitController.text = item.unit;
       _notesController.text = item.notes;
       _roomController.text = item.room;
@@ -59,6 +77,8 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
       _photoController.text = item.photo ?? '';
       _gpsController.text = item.gpsLocation ?? '';
       _tagsController.text = item.tags;
+    } else {
+      _inputMode = MeasurementInputMode.single;
     }
   }
 
@@ -190,9 +210,15 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
             '${_value2Controller.text.trim()}';
 
       case MeasurementInputMode.size:
-        return '${_value1Controller.text.trim()} x '
-            '${_value2Controller.text.trim()} x '
-            '${_value3Controller.text.trim()}';
+        final v1 = _value1Controller.text.trim();
+        final v2 = _value2Controller.text.trim();
+        final v3 = _value3Controller.text.trim();
+
+        if (v3.isEmpty) {
+          return '$v1 x $v2';
+        }
+
+        return '$v1 x $v2 x $v3';
     }
   }
 
@@ -226,6 +252,7 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
     });
   }
 
+  /*
   void _insertSeparator(String separator) {
     final value = _value1Controller.value;
 
@@ -248,7 +275,7 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
       selection: TextSelection.collapsed(offset: start + separator.length),
     );
   }
-
+*/
   @override
   Widget build(BuildContext context) {
     final database = ref.watch(appDatabaseProvider);
@@ -362,20 +389,22 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
 
                         Row(
                           children: [
-                            _buildValueField(_value1Controller),
-
+                            if (_inputMode == MeasurementInputMode.single)
+                              _buildValueField(
+                                _value1Controller,
+                                label: 'Value',
+                              ),
                             if (_inputMode == MeasurementInputMode.range) ...[
+                              _buildValueField(_value1Controller, label: 'Min'),
                               const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8),
-                                child: Text(
-                                  '-',
-                                  style: TextStyle(fontSize: 22),
-                                ),
+                                child: Text('-'),
                               ),
-                              _buildValueField(_value2Controller),
+                              _buildValueField(_value2Controller, label: 'Max'),
                             ],
 
                             if (_inputMode == MeasurementInputMode.size) ...[
+                              _buildValueField(_value1Controller, label: 'H'),
                               const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8),
                                 child: Text(
@@ -383,8 +412,7 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
                                   style: TextStyle(fontSize: 22),
                                 ),
                               ),
-                              _buildValueField(_value2Controller),
-
+                              _buildValueField(_value2Controller, label: 'W'),
                               const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8),
                                 child: Text(
@@ -392,7 +420,7 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
                                   style: TextStyle(fontSize: 22),
                                 ),
                               ),
-                              _buildValueField(_value3Controller),
+                              _buildValueField(_value3Controller, label: 'L'),
                             ],
                           ],
                         ),
@@ -629,12 +657,12 @@ class _MeasurementEditorPageState extends ConsumerState<MeasurementEditorPage> {
     );
   }
 
-  Widget _buildValueField(TextEditingController controller) {
+  Widget _buildValueField(TextEditingController controller, {String? label}) {
     return Expanded(
       child: TextFormField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: const InputDecoration(),
+        decoration: InputDecoration(labelText: label),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
       ),
     );
