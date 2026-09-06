@@ -27,6 +27,10 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to add a picture to your measurement.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location if you want to add GPS coordinates to your listing.</string>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>

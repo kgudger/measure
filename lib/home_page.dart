@@ -167,6 +167,25 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
                                 },
                               ),
                             ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                              ),
+                              onPressed: () async {
+                                await ref
+                                    .read(appDatabaseProvider)
+                                    .deleteItem(item.id);
+
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Item deleted successfully'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                            ),
                             Text(
                               'Created: ${item.dateCreated.toLocal().toString().split('.')[0]}',
                               style: const TextStyle(
