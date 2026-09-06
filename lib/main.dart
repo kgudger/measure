@@ -39,22 +39,33 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         // 1. Sets the page background for all Scaffolds
-        scaffoldBackgroundColor: const Color(0xFF1E2229),
-
-        // 2. Updates the ColorScheme so widgets (cards, dialogs) match
+        scaffoldBackgroundColor: const Color(
+          0xFFE5E7EB,
+        ), // Slightly darker, premium cool gray
+        // 1. Updates the ColorScheme for light mode behaviors
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E2229),
-          brightness:
-              Brightness.dark, // Switches default behaviors to dark mode
-          surface: const Color(0xFF1E2229),
+          seedColor: const Color(
+            0xFF1E2229,
+          ), // Rich slate/charcoal seed for buttons/accents
+          brightness: Brightness.light, // Maintains light mode behaviors
+          surface: const Color(
+            0xFFFFFFFF,
+          ), // Pure white surface makes cards pop against the darker gray
         ),
 
-        // 3. Forces default text styles to use white
+        // 2. Strong contrast text styles
         textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
+          bodyLarge: TextStyle(
+            color: Color(
+              0xFF111827,
+            ), // Deeper, high-contrast dark slate for primary numbers/labels
+            fontWeight: FontWeight.w600,
+          ),
           bodyMedium: TextStyle(
-            color: Colors.white70,
-          ), // Slightly faded white for subtext
+            color: Color(
+              0xFF4B5563,
+            ), // Balanced medium gray for secondary metrics/units (e.g., kg, cm)
+          ),
         ),
       ),
       debugShowCheckedModeBanner: false,

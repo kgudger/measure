@@ -24,7 +24,10 @@ class _HelpPage extends State<HelpPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(helpText, style: TextStyle(fontSize: 16)),
+            Text(
+              helpText,
+              style: TextStyle(fontSize: 16, color: Color(0xFF111827)),
+            ),
             const Spacer(), // Pushes the version numbers to the bottom
             // FutureBuilder pulls the version dynamically
             FutureBuilder<PackageInfo>(
@@ -39,7 +42,10 @@ class _HelpPage extends State<HelpPage> {
                   return Center(
                     child: Text(
                       'App Version: $version ($buildNumber)',
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      style: const TextStyle(
+                        color: Color(0xFF4B5563),
+                        fontSize: 14,
+                      ),
                     ),
                   );
                 }
