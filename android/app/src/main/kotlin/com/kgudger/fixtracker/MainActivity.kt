@@ -1,4 +1,4 @@
-package com.example.measure
+package com.kgudger.fixtracker
 
 import io.flutter.embedding.android.FlutterActivity
 
